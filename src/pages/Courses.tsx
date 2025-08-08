@@ -21,15 +21,27 @@ const Courses = () => {
   const [sortBy, setSortBy] = useState('title');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
 
   useEffect(() => {
     const loadCourses = async () => {
-      await mockDB.initializeData();
-      const coursesData = mockDB.getCourses();
-      setCourses(coursesData);
-      setFilteredCourses(coursesData);
-      setLoading(false);
+      try {
+        setLoading(true);
+        setError(null);
+        await mockDB.initializeData();
+        const coursesData = mockDB.getCourses();
+        setCourses(coursesData);
+        setFilteredCourses(coursesData);
+      } catch (err) {
+        console.error('Error loading courses:', err);
+        setError('Failed to load courses. Please try again later.');
+        // Set empty arrays as fallback
+        setCourses([]);
+        setFilteredCourses([]);
+      } finally {
+        setLoading(false);
+      }
     };
     loadCourses();
   }, []);
@@ -92,6 +104,21 @@ const Courses = () => {
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
           <p className="text-muted-foreground">Loading courses...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-red-500 text-6xl mb-4">⚠️</div>
+          <h2 className="text-2xl font-semibold text-primary mb-2">Error Loading Courses</h2>
+          <p className="text-muted-foreground mb-4">{error}</p>
+          <Button onClick={() => window.location.reload()}>
+            Try Again
+          </Button>
         </div>
       </div>
     );
